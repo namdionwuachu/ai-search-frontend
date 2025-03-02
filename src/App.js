@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const API_URL = "https://tab6oyjq64.execute-api.us-east-1.amazonaws.com/dev"; // Replace with your API Gateway URL
+const API_URL = "https://tab6oyjq64.execute-api.us-east-1.amazonaws.com/dev/query"; // Replace with your API Gateway URL
 
 function App() {
   const [query, setQuery] = useState("");
