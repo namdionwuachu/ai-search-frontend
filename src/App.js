@@ -7,24 +7,34 @@ function App() {
   const [query, setQuery] = useState("");
   const [response, setResponse] = useState("");
   const [sources, setSources] = useState([]);
+  const [loading, setLoading] = useState(false); // ✅ Added loading state
 
   const handleSearch = async () => {
-    if (!query) return;
+    if (!query.trim()) return;
     setResponse("🔎 Searching...");
+    setSources([]);
+    setLoading(true); // ✅ Show loading state
 
     try {
       const result = await axios.post(
         API_URL,
-        { query }, 
-        { headers: { "Content-Type": "application/json" } } // ✅ Ensure proper headers
+        { query },
+        { headers: { "Content-Type": "application/json" } }
       );
+
+      console.log("✅ API Response:", result.data); // ✅ Debugging output
 
       setResponse(result.data.response || "No response received.");
       setSources(Array.isArray(result.data.sources) ? result.data.sources : []);
     } catch (error) {
-      console.error("❌ API Request Failed:", error);
-      setResponse("❌ Error fetching response.");
+      console.error("❌ API Request Failed:", error.response || error.message);
+      
+      setResponse(`❌ Error fetching response: ${
+        error.response?.data?.error || error.message || "Unknown error"
+      }`);
       setSources([]);
+    } finally {
+      setLoading(false); // ✅ Hide loading state
     }
   };
 
@@ -36,24 +46,53 @@ function App() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Ask a question..."
-        style={{ width: "100%", padding: "10px", marginBottom: "10px", fontSize: "16px" }}
+        style={{
+          width: "100%",
+          padding: "10px",
+          marginBottom: "10px",
+          fontSize: "16px",
+          border: "1px solid #ccc",
+          borderRadius: "5px",
+        }}
       />
-      <button onClick={handleSearch} style={{ padding: "10px 20px", cursor: "pointer", fontSize: "16px" }}>
-        Search
+      <button
+        onClick={handleSearch}
+        disabled={loading}
+        style={{
+          padding: "10px 20px",
+          cursor: loading ? "not-allowed" : "pointer",
+          fontSize: "16px",
+          backgroundColor: loading ? "#aaa" : "#007BFF",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          transition: "background-color 0.3s",
+        }}
+      >
+        {loading ? "Searching..." : "Search"}
       </button>
+
       <div style={{ marginTop: "20px" }}>
         <h3>Response:</h3>
-        <p>{response}</p>
+        <p style={{ color: response.startsWith("❌") ? "red" : "black" }}>
+          {response}
+        </p>
       </div>
+
       <div>
         <h3>Sources:</h3>
-        <ul>
-          {sources.length > 0 ? (
-            sources.map((s, i) => <li key={i}>{s.title || "Unknown Source"}</li>)
-          ) : (
-            <p>No sources available.</p>
-          )}
-        </ul>
+        {sources.length > 0 ? (
+          <ul>
+            {sources.map((s, i) => (
+              <li key={i}>
+                <strong>{s.title || "Unknown Source"}</strong> <br />
+                <small>{s.content ? s.content.slice(0, 150) + "..." : "No content available."}</small>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No sources available.</p>
+        )}
       </div>
     </div>
   );
