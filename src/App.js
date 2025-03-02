@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const API_URL = "https://tab6oyjq64.execute-api.us-east-1.amazonaws.com/dev/query"; // Replace with your API Gateway URL
+const API_URL = "https://tab6oyjq64.execute-api.us-east-1.amazonaws.com/dev/query"; // Ensure correct API Gateway endpoint
 
 function App() {
   const [query, setQuery] = useState("");
@@ -10,15 +10,23 @@ function App() {
 
   const handleSearch = async () => {
     if (!query) return;
-    setResponse("Searching...");
+    setResponse("🔎 Searching...");
 
     try {
-      const result = await axios.post(API_URL, { query });
-      setResponse(result.data.response);
-      setSources(result.data.sources);
+      const result = await axios.post(
+        API_URL,
+        { query }, 
+        { headers: { "Content-Type": "application/json" } } // ✅ Ensure proper headers
+      );
+
+      setResponse(result.data.response || "No response received.");
+      setSources(Array.isArray(result.data.sources) ? result.data.sources : []);
     } catch (error) {
-      setResponse("Error fetching response.");
-    }  };
+      console.error("❌ API Request Failed:", error);
+      setResponse("❌ Error fetching response.");
+      setSources([]);
+    }
+  };
 
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "auto", textAlign: "center" }}>
@@ -39,11 +47,17 @@ function App() {
       </div>
       <div>
         <h3>Sources:</h3>
-        <ul>{sources.map((s, i) => <li key={i}>{s}</li>)}</ul>
+        <ul>
+          {sources.length > 0 ? (
+            sources.map((s, i) => <li key={i}>{s.title || "Unknown Source"}</li>)
+          ) : (
+            <p>No sources available.</p>
+          )}
+        </ul>
       </div>
     </div>
   );
 }
 
-
 export default App;
+
